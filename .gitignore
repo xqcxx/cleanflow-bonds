@@ -1,0 +1,10 @@
+cache/
+out/
+broadcast/
+lib/
+frontend/.next/
+frontend/node_modules/
+frontend/.env*
+!.env.example
+deployments/local.json
+deployments/scenario.json
