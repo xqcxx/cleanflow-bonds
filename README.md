@@ -58,16 +58,6 @@ The project pins Uniswap v4, Reactive, and Foundry test dependencies under `lib/
 - Snapshot LP claims, trader claims, and 60/30/10 allocation.
 - A responsive frontend execution laboratory that reads on-chain state and submits actual wallet transactions after deployment.
 
-## Demo Assets
-
-- [`docs/warranty-spec.md`](docs/warranty-spec.md)
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/threat-model.md`](docs/threat-model.md)
-- [`docs/demo-runbook.md`](docs/demo-runbook.md)
-- [`docs/fresh-testnet-deployment.md`](docs/fresh-testnet-deployment.md)
-
-The testnet deployment flow and video sequence are documented in the demo runbook. The Reactive contract is deployed with `forge create` because its payable constructor must receive subscription funding. The local lifecycle test remains the deterministic recording fallback.
-
 ## Website
 
 `frontend/` now has two public routes:
