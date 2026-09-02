@@ -72,6 +72,8 @@ The testnet deployment flow and video sequence are documented in the demo runboo
 
 `frontend/` now has two public routes:
 
+Live deployment: [cleanflow-bonds.vercel.app](https://cleanflow-bonds.vercel.app)
+
 - `/`: project website covering the problem, warranty, incentive model, architecture, proof, and explicit limits.
 - `/lab`: the connected execution laboratory for the clean and violation scenarios.
 
