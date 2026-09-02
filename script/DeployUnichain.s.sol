@@ -30,6 +30,7 @@ contract DeployUnichainScript is Script {
         address callbackProxy = vm.envAddress("CALLBACK_PROXY");
         address safetyReserve = vm.envOr("SAFETY_RESERVE", deployer);
         address managerAddress = vm.envOr("POOL_MANAGER", address(0));
+        uint256 callbackFunding = vm.envOr("CALLBACK_FUNDING", uint256(0.1 ether));
 
         vm.startBroadcast(privateKey);
         IPoolManager manager = managerAddress == address(0)
@@ -72,10 +73,18 @@ contract DeployUnichainScript is Script {
         controller.setRouter(address(router));
         controller.setHook(address(hook));
         router.setPool(address(hook), PoolId.unwrap(key.toId()));
+        (bool funded,) = callbackProxy.call{value: callbackFunding}(
+            abi.encodeWithSignature("depositTo(address)", address(controller))
+        );
+        require(funded, "callback funding failed");
         vm.stopBroadcast();
 
         string memory root = "deployment";
         vm.serializeUint(root, "chainId", block.chainid);
+        vm.serializeUint(root, "deployedBlock", block.number);
+        vm.serializeString(root, "chainName", "Unichain Sepolia");
+        vm.serializeString(root, "rpcUrl", "https://sepolia.unichain.org");
+        vm.serializeString(root, "explorerUrl", "https://sepolia.uniscan.xyz");
         vm.serializeAddress(root, "deployer", deployer);
         vm.serializeAddress(root, "poolManager", address(manager));
         vm.serializeAddress(root, "callbackProxy", callbackProxy);
@@ -91,7 +100,9 @@ contract DeployUnichainScript is Script {
         vm.serializeAddress(root, "hookFactory", address(factory));
         vm.serializeAddress(root, "hook", address(hook));
         vm.serializeAddress(root, "liquidityManager", address(liquidityManager));
-        string memory json = vm.serializeBytes32(root, "poolId", PoolId.unwrap(key.toId()));
+        vm.serializeBytes32(root, "poolId", PoolId.unwrap(key.toId()));
+        string memory json = vm.serializeBool(root, "deployed", true);
         vm.writeJson(json, "deployments/unichain-sepolia.json");
+        vm.writeJson(json, "frontend/public/deployments/unichain-sepolia.json");
     }
 }

@@ -4,6 +4,16 @@ CleanFlow Bonds turns a router's execution-quality promise into a collateralized
 
 The prototype deliberately covers one machine-checkable pattern. It does not claim universal MEV detection, privacy, or Sybil resistance.
 
+## Partner Integrations
+
+These are implemented integrations in this repository, not future plans:
+
+- **Unichain Sepolia** (`chain ID 1301`) is the destination and execution chain. The deployed Uniswap v4 `PoolManager` is used by `CleanFlowRouter` and `CleanFlowHook` for real pool initialization, swaps, dynamic fee selection, and canonical receipts. Deployment and configuration are in [`script/DeployUnichain.s.sol`](script/DeployUnichain.s.sol), [`src/core/CleanFlowRouter.sol`](src/core/CleanFlowRouter.sol), and [`src/hook/CleanFlowHook.sol`](src/hook/CleanFlowHook.sol). The live deployment addresses are in [`deployments/unichain-sepolia.json`](deployments/unichain-sepolia.json).
+- **Reactive Network Lasna** (`chain ID 5318007`) runs [`CleanFlowRSC`](src/reactive/CleanFlowRSC.sol). It subscribes to Unichain hook/controller events, correlates the front/protected/back receipt sequence, creates the evidence hash, and emits authenticated callbacks to the Unichain controller. Deployment and RVM binding are in [`script/DeployReactive.s.sol`](script/DeployReactive.s.sol) and [`script/ConfigureRvm.s.sol`](script/ConfigureRvm.s.sol). The live RSC metadata is in [`deployments/reactive-lasna.json`](deployments/reactive-lasna.json).
+- **Reactive callback delivery on Unichain Sepolia** uses the official Unichain Sepolia Callback Proxy configured in `CleanFlowController`. The callback path is implemented in [`src/core/CleanFlowController.sol`](src/core/CleanFlowController.sol) and exercised by [`test/integration/CleanFlowLifecycle.t.sol`](test/integration/CleanFlowLifecycle.t.sol).
+
+The integration proof is the passing lifecycle test: real upstream Uniswap v4 PoolManager swaps, Reactive event correlation, authenticated callback handling, slash allocation, and trader/LP claims.
+
 ## Warranty
 
 ```text
@@ -54,6 +64,19 @@ The project pins Uniswap v4, Reactive, and Foundry test dependencies under `lib/
 - [`docs/architecture.md`](docs/architecture.md)
 - [`docs/threat-model.md`](docs/threat-model.md)
 - [`docs/demo-runbook.md`](docs/demo-runbook.md)
-- [`docs/slides-outline.md`](docs/slides-outline.md)
+- [`docs/fresh-testnet-deployment.md`](docs/fresh-testnet-deployment.md)
 
-The testnet deployment flow and video sequence are documented in the demo runbook. The local lifecycle test remains the deterministic recording fallback.
+The testnet deployment flow and video sequence are documented in the demo runbook. The Reactive contract is deployed with `forge create` because its payable constructor must receive subscription funding. The local lifecycle test remains the deterministic recording fallback.
+
+## Website
+
+`frontend/` now has two public routes:
+
+- `/`: project website covering the problem, warranty, incentive model, architecture, proof, and explicit limits.
+- `/lab`: the connected execution laboratory for the clean and violation scenarios.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```

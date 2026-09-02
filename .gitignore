@@ -2,9 +2,13 @@ cache/
 out/
 broadcast/
 lib/
+.env
+.env.*
 frontend/.next/
 frontend/node_modules/
 frontend/.env*
 !.env.example
+.vercel/
+frontend/.vercel/
 deployments/local.json
 deployments/scenario.json

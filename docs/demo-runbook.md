@@ -33,15 +33,26 @@ forge script script/DeployUnichain.s.sol:DeployUnichainScript \
   --rpc-url "$UNICHAIN_RPC_URL" --broadcast
 ```
 
-3. Copy `deployments/unichain-sepolia.json` into `frontend/public/deployments/` and add `deployed: true`, chain metadata, and seeded actor addresses.
-4. Deploy the RSC on Reactive Lasna with the actual hook and controller addresses:
+3. `DeployUnichain` writes the deployment manifest to both `deployments/` and `frontend/public/deployments/`, including the public RPC and explorer URLs. `SeedDemo` writes the public actor manifest, including the executor address, to `frontend/public/deployments/demo-accounts.json`. Do not put keys in either public file.
+4. Deploy the RSC on Reactive Lasna with `forge create`. This sends the payable constructor funding required for Reactive subscriptions:
 
 ```bash
-ORIGIN_CHAIN_ID=1301 DESTINATION_CHAIN_ID=1301 \
-HOOK=<hook> CONTROLLER=<controller> \
-forge script script/DeployReactive.s.sol:DeployReactiveScript \
-  --rpc-url "$REACTIVE_RPC_URL" --broadcast
+forge create src/reactive/CleanFlowRSC.sol:CleanFlowRSC \
+  --rpc-url "$REACTIVE_RPC_URL" \
+  --private-key "$PRIVATE_KEY" \
+  --value 100000000000000000 \
+  --constructor-args \
+    1301 \
+    1301 \
+    "$HOOK" \
+    "$CONTROLLER" \
+    "$CONTROLLER" \
+    1000000 \
+    1000000000000000 \
+  --broadcast
 ```
+
+Copy the `Deployed to:` address into `deployments/reactive-lasna.json` as `rsc`. The constructor arguments are origin chain, destination chain, origin hook, origin controller, destination controller, callback gas limit, and profit threshold.
 
 5. Obtain the actual ReactVM identity from Reactive. Bind it once from the Unichain deployer:
 
@@ -51,8 +62,32 @@ forge script script/ConfigureRvm.s.sol:ConfigureRvmScript \
   --rpc-url "$UNICHAIN_RPC_URL" --broadcast
 ```
 
-6. Seed the executor with `1,000` demo USDC and both LPs before protected execution. Add v4 liquidity through `DemoLiquidityManager`.
-7. Record source receipt transactions, the Reactive callback transaction, the final destination transaction, and claims before recording the video.
+6. Export the addresses from `deployments/unichain-sepolia.json` as `TOKEN0`, `TOKEN1`, `BOND_TOKEN`, `LP_TOKEN`, `POOL_MANAGER`, `BOND_VAULT`, `LP_VAULT`, `ROUTER`, `HOOK`, and `LIQUIDITY_MANAGER`. Then seed fixed scenario actors and real v4 liquidity:
+
+```bash
+forge script script/SeedDemo.s.sol:SeedDemoScript \
+  --rpc-url "$UNICHAIN_RPC_URL" --broadcast
+```
+
+This script requires `EXECUTOR_PRIVATE_KEY`, `TRADER_PRIVATE_KEY`, `ALICE_PRIVATE_KEY`, and `BAO_PRIVATE_KEY`, in addition to the deployer `PRIVATE_KEY`.
+
+7. Run the two canonical branches. The separate resolution request is intentional: it allows testnet blocks and Reactive delivery to progress visibly.
+
+```bash
+forge script script/RunCleanScenario.s.sol:RunCleanScenarioScript \
+  --rpc-url "$UNICHAIN_RPC_URL" --broadcast
+
+forge script script/RunViolationScenario.s.sol:RunViolationScenarioScript \
+  --rpc-url "$UNICHAIN_RPC_URL" --broadcast
+
+EXECUTION_ID=<id-from-scenario-json> \
+forge script script/RequestResolution.s.sol:RequestResolutionScript \
+  --rpc-url "$UNICHAIN_RPC_URL" --broadcast
+```
+
+Wait until `resolutionBlock` in the scenario manifest is reached before the final command. Reactive uses evidence to select either `clearExecution` or `finalizeViolation`.
+
+8. Record source receipt transactions, the Reactive callback transaction, the final destination transaction, and claims before recording the video.
 
 ## Browser Lab
 

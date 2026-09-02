@@ -60,5 +60,3 @@ LP eligibility is determined from shares in the block before protected execution
 | Profit threshold | 1 starting-asset unit |
 | Reserved bond | 100 USDC |
 | Trader / LP / reserve | 60% / 30% / 10% |
-
-These are controlled prototype parameters, not claims of optimal production economics.

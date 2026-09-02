@@ -1,0 +1,9 @@
+{
+    "chainId": 5318007,
+    "originChainId": 1301,
+    "destinationChainId": 1301,
+    "hook": "0xACE790F5dC1Aa04bf6FA80f56547eD0AeC1640c0",
+    "controller": "0x839De1cB8749df1d01bdeFB230d4b48ac9DD7509",
+    "rsc": "0x4D93D9D5e8A6ad9C2893A28eaa6964dd52BDC754",
+    "rvmId": "0x599282387bcec523e9d10711ee8b396d7644ce13"
+}

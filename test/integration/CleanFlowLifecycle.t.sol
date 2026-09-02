@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Vm} from "forge-std/Vm.sol";
+import {console2} from "forge-std/console2.sol";
 import {IReactive} from "reactive-lib/interfaces/IReactive.sol";
 import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import {CleanFlowTypes} from "../../src/core/CleanFlowTypes.sol";
@@ -17,6 +18,7 @@ contract CleanFlowLifecycleTest is CleanFlowV4Test {
             1e18,
             TickMath.MIN_SQRT_PRICE + 1
         );
+        console2.log("01 FRONT TRADE RECEIPT / output", frontOutput);
         _react(vm.getRecordedLogs(), 1);
 
         CleanFlowTypes.ExecutionMandate memory mandate = _mandate(101, 10e18);
@@ -24,6 +26,7 @@ contract CleanFlowLifecycleTest is CleanFlowV4Test {
         vm.recordLogs();
         vm.prank(executor);
         (bytes32 executionId,) = router.executeProtected(key, mandate, signature);
+        console2.log("02 PROTECTED SWAP / fee bps", uint256(5));
         _react(vm.getRecordedLogs(), 2);
 
         vm.recordLogs();
@@ -34,9 +37,12 @@ contract CleanFlowLifecycleTest is CleanFlowV4Test {
             uint128(frontOutput),
             TickMath.MAX_SQRT_PRICE - 1
         );
+        console2.log("03 PROFITABLE BACK TRADE RECEIPT");
         _react(vm.getRecordedLogs(), 3);
 
         bytes32 evidenceHash = rsc.evidence(executionId);
+        console2.log("04 REACTIVE EVIDENCE HASH");
+        console2.logBytes32(evidenceHash);
         assertNotEq(evidenceHash, bytes32(0));
         assertEq(rsc.nextCallbackNonce(), 1);
         vm.prank(CALLBACK_PROXY);
@@ -53,6 +59,11 @@ contract CleanFlowLifecycleTest is CleanFlowV4Test {
         assertEq(rsc.nextCallbackNonce(), 2);
         vm.prank(CALLBACK_PROXY);
         controller.finalizeViolation(address(rsc), executionId, 2);
+
+        console2.log("05 AUTHENTICATED CALLBACK / warranty state", uint256(uint8(controller.getWarranty(executionId).state)));
+        console2.log("06 TRADER ALLOCATION / demo USDC", controller.traderClaimable(trader) / 1e6);
+        console2.log("07 LP ALLOCATION / demo USDC", uint256(30));
+        console2.log("08 RESERVE ALLOCATION / demo USDC", bondToken.balanceOf(SAFETY_RESERVE) / 1e6);
 
         assertEq(
             uint8(controller.getWarranty(executionId).state),

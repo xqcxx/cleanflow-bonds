@@ -170,7 +170,7 @@ contract CleanFlowRSC is AbstractReactive {
             uint64 callbackNonce = ++nextCallbackNonce;
             bytes memory payload = abi.encodeWithSignature(
                 "openViolation(address,bytes32,bytes32,uint64)",
-                address(this),
+                address(0),
                 executionId,
                 evidenceHash,
                 callbackNonce
@@ -223,13 +223,13 @@ contract CleanFlowRSC is AbstractReactive {
         bytes memory payload = violated
             ? abi.encodeWithSignature(
                 "finalizeViolation(address,bytes32,uint64)",
-                address(this),
+                address(0),
                 executionId,
                 callbackNonce
             )
             : abi.encodeWithSignature(
                 "clearExecution(address,bytes32,uint64)",
-                address(this),
+                address(0),
                 executionId,
                 callbackNonce
             );
