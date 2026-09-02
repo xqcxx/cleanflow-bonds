@@ -14,6 +14,36 @@ These are implemented integrations in this repository, not future plans:
 
 The integration proof is the passing lifecycle test: real upstream Uniswap v4 PoolManager swaps, Reactive event correlation, authenticated callback handling, slash allocation, and trader/LP claims.
 
+## Hookathon Submission
+
+### Project Description
+
+CleanFlow Bonds is a Uniswap v4 hook-based warranty system that detects sandwich-style MEV patterns and lets protected swaps be refunded from a bonded executor stake. It aligns incentives by routing slashed bond funds to the affected trader, pre-event LPs, and a protocol reserve.
+
+### Partners Integrated
+
+I integrated with Unichain and Reactive Network.
+
+### How I Integrated the Partners
+
+I deployed the Uniswap v4 hook and CleanFlow controller on Unichain Sepolia, where the hook records protected swap context and manages the warranty lifecycle. A Reactive Network smart contract monitors relevant Unichain event flows, correlates a front trade, protected swap, and profitable opposite-direction back trade by the same executor within a short receipt window, then triggers the callback path to settle the warranty and slash the executor bond.
+
+### Theme Alignment
+
+Yes. CleanFlow Bonds directly addresses the 2026 UHI10 Uniswap Hookathon theme, "Sustainable Liquidity and MEV Protection," through a sandwich-neutralizing hook design. Rather than only detecting harmful execution, it creates an enforceable economic guarantee: bonded executors bear the cost of verified sandwich behavior, harmed traders receive refunds, and pre-event LPs share in slash proceeds to support sustainable liquidity participation.
+
+### Problem / Background
+
+Sandwich attacks remain a major problem for onchain traders because users often have no practical recourse after receiving worse execution from adversarial transaction ordering. Existing MEV protection often focuses on prevention or private order flow, but does not provide an onchain remedy when harmful execution is verified. I was inspired by the idea that execution providers should post economic collateral and be accountable when their behavior demonstrably harms users.
+
+### Impact
+
+CleanFlow Bonds turns MEV detection into an enforceable, incentive-aligned warranty. Its unique approach combines a Uniswap v4 hook, a bonded executor model, and cross-chain event correlation to make verified sandwich behavior financially costly. A successful claim returns funds to the harmed trader, compensates LPs who supplied liquidity before the event, and funds a protocol reserve. This creates a model where better execution and sustainable liquidity are economically rewarded.
+
+### Challenges
+
+The main challenge was defining a sandwich pattern that is strict enough to reduce false positives while still being practical to verify onchain. I implemented a bounded receipt window requiring the same executor or pool to perform a front trade, protected swap, and profitable opposite-direction back trade. Other challenges included coordinating Unichain hook and controller state with Reactive Network event monitoring and callback execution, correctly handling callback funding and payload constraints, and making the lifecycle observable in a frontend demo.
+
 ## Warranty
 
 ```text
