@@ -14,7 +14,6 @@ These are implemented integrations in this repository, not future plans:
 
 The integration proof is the passing lifecycle test: real upstream Uniswap v4 PoolManager swaps, Reactive event correlation, authenticated callback handling, slash allocation, and trader/LP claims.
 
-## Hookathon Submission
 
 ### Project Description
 
@@ -30,7 +29,7 @@ I deployed the Uniswap v4 hook and CleanFlow controller on Unichain Sepolia, whe
 
 ### Theme Alignment
 
-Yes. CleanFlow Bonds directly addresses the 2026 UHI10 Uniswap Hookathon theme, "Sustainable Liquidity and MEV Protection," through a sandwich-neutralizing hook design. Rather than only detecting harmful execution, it creates an enforceable economic guarantee: bonded executors bear the cost of verified sandwich behavior, harmed traders receive refunds, and pre-event LPs share in slash proceeds to support sustainable liquidity participation.
+CleanFlow Bonds directly addresses the 2026 UHI10 Uniswap Hookathon theme, "Sustainable Liquidity and MEV Protection," through a sandwich-neutralizing hook design. Rather than only detecting harmful execution, it creates an enforceable economic guarantee: bonded executors bear the cost of verified sandwich behavior, harmed traders receive refunds, and pre-event LPs share in slash proceeds to support sustainable liquidity participation.
 
 ### Problem / Background
 
