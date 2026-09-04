@@ -2,9 +2,24 @@
   "executionId": "0x0ec5e29a5b9f607972f9f0ad86cf02b3c9a0852a339808cf9e72b01cfe55c822",
   "executor": "0xf26DC311a125971a149da0FcBbbD38F00Be1634E",
   "frontOutput": 976400999880597968,
+  "nextSequence": 4,
   "resolutionBlock": 61521364,
   "trader": "0x8E74976946389e733476b2A3AF741baDCfD9fACf",
   "timeline": [
+    {
+      "sequence": 1,
+      "label": "Signed protected execution",
+      "detail": "5 bps lane / 10 token input",
+      "tone": "protected",
+      "hash": "0xf406b0aa8544d0946cd93b8e5f35c17eff244243a0ee68b600861bb081e4669b"
+    },
+    {
+      "sequence": 10000,
+      "label": "Warranty cleared",
+      "detail": "100 USDC released",
+      "tone": "settled",
+      "hash": "0x6f34e4992a3f775a31a85098690ab0971d19470b3540d406222ddc854f8f8e5b"
+    },
     {
       "sequence": 2,
       "label": "Executor front trade",

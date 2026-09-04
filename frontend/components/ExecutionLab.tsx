@@ -47,6 +47,7 @@ type TimelineItem = {
 
 type Scenario = {
   executionId?: Hex;
+  nextSequence?: number;
   timeline?: TimelineItem[];
 };
 
@@ -100,6 +101,7 @@ export default function ExecutionLab() {
         setDeployment(value);
         setExecutor(actors?.executor ?? value.executor ?? "");
         setExecutionId(scenario?.executionId);
+        setSequence(BigInt(scenario?.nextSequence ?? 0));
         setTimeline(scenario?.timeline ?? []);
         setStatus(value.deployed ? "Deployment found. Connect the current scenario actor." : "Deployment required. Local tests remain available with forge.");
       })
@@ -194,7 +196,7 @@ export default function ExecutionLab() {
         if (log.eventName === "WarrantySlashed") items.push({ sequence: 20_000 + Number(log.logIndex), label: "Bond slashed", detail: `${formatUnits(log.args.slashAmount ?? 0n, 6)} USDC allocated`, tone: "settled", hash });
         if (log.eventName === "WarrantyCleared") items.push({ sequence: 20_000 + Number(log.logIndex), label: "Warranty cleared", detail: `${formatUnits(log.args.releasedBond ?? 0n, 6)} USDC released`, tone: "settled", hash });
       }
-      if (items.length) setTimeline((current) => [...current, ...items].sort((a, b) => a.sequence - b.sequence));
+      if (items.length) setTimeline((current) => [...current, ...items]);
       await refresh();
       return receipt;
     } catch (error) {
