@@ -45,6 +45,11 @@ type TimelineItem = {
   hash: Hex;
 };
 
+type Scenario = {
+  executionId?: Hex;
+  timeline?: TimelineItem[];
+};
+
 type Mandate = {
   trader: Address;
   executor: Address;
@@ -89,12 +94,13 @@ export default function ExecutionLab() {
     Promise.all([
       fetch("/deployments/unichain-sepolia.json").then((response) => response.json() as Promise<Deployment>),
       fetch("/deployments/demo-accounts.json").then((response) => response.ok ? response.json() as Promise<{ executor?: Address }> : undefined),
-      fetch("/deployments/violation-scenario.json").then((response) => response.ok ? response.json() as Promise<{ executionId?: Hex }> : undefined),
+      fetch("/deployments/violation-scenario.json").then((response) => response.ok ? response.json() as Promise<Scenario> : undefined),
     ])
       .then(([value, actors, scenario]) => {
         setDeployment(value);
         setExecutor(actors?.executor ?? value.executor ?? "");
         setExecutionId(scenario?.executionId);
+        setTimeline(scenario?.timeline ?? []);
         setStatus(value.deployed ? "Deployment found. Connect the current scenario actor." : "Deployment required. Local tests remain available with forge.");
       })
       .catch(() => setStatus("Could not load the deployment manifest."));
@@ -141,50 +147,8 @@ export default function ExecutionLab() {
     setBusy(true);
     try {
       const latest = await publicClient.getBlockNumber();
-      const fromBlock = deployment.deployedBlock ? BigInt(deployment.deployedBlock) : 0n;
-      // Unichain RPC providers reject large eth_getLogs ranges, so scan in bounded chunks.
-      async function getLogsInChunks(address: Address, event: any) {
-        const logs: any[] = [];
-        const chunkSize = 2_000n;
-        for (let start = fromBlock; start <= latest; start += chunkSize) {
-          logs.push(...await publicClient!.getLogs({
-            address,
-            event,
-            fromBlock: start,
-            toBlock: start + chunkSize - 1n > latest ? latest : start + chunkSize - 1n,
-          }));
-        }
-        return logs;
-      }
-
-      const [nextSequence, inventory, protectedLogs, violations, slashes, clears] = await Promise.all([
-        publicClient.readContract({ address: deployment.controller, abi: controllerAbi, functionName: "nextSequence" }),
-        getLogsInChunks(deployment.hook, inventoryEvent),
-        getLogsInChunks(deployment.hook, protectedEvent),
-        getLogsInChunks(deployment.controller, violationEvent),
-        getLogsInChunks(deployment.controller, slashedEvent),
-        getLogsInChunks(deployment.controller, clearedEvent),
-      ]);
+      const nextSequence = await publicClient.readContract({ address: deployment.controller, abi: controllerAbi, functionName: "nextSequence" });
       setSequence(nextSequence);
-      const items: TimelineItem[] = [];
-      for (const log of inventory) items.push({
-        sequence: Number(log.args.sequence ?? 0n),
-        label: log.args.zeroForOne ? "Executor front trade" : "Executor back trade",
-        detail: `${formatUnits(log.args.amountIn ?? 0n, 18)} in / ${formatUnits(log.args.amountOut ?? 0n, 18)} out`,
-        tone: "trade",
-        hash: log.transactionHash,
-      });
-      for (const log of protectedLogs) items.push({
-        sequence: Number(log.args.sequence ?? 0n),
-        label: "Signed protected execution",
-        detail: `5 bps lane / ${formatUnits(log.args.amountIn ?? 0n, 18)} token input`,
-        tone: "protected",
-        hash: log.transactionHash,
-      });
-      for (const log of violations) items.push({ sequence: 10_000 + Number(log.logIndex), label: "Reactive evidence matched", detail: short(log.args.evidenceHash), tone: "reactive", hash: log.transactionHash });
-      for (const log of slashes) items.push({ sequence: 20_000 + Number(log.logIndex), label: "Bond slashed", detail: `${formatUnits(log.args.slashAmount ?? 0n, 6)} USDC allocated`, tone: "settled", hash: log.transactionHash });
-      for (const log of clears) items.push({ sequence: 20_000 + Number(log.logIndex), label: "Warranty cleared", detail: `${formatUnits(log.args.releasedBond ?? 0n, 6)} USDC released`, tone: "settled", hash: log.transactionHash });
-      setTimeline(items.sort((a, b) => a.sequence - b.sequence));
 
       if (currentAccount) {
         const bond = await publicClient.readContract({ address: deployment.bondVault, abi: bondVaultAbi, functionName: "accounts", args: [currentAccount] });
@@ -221,6 +185,16 @@ export default function ExecutionLab() {
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
       if (receipt.status !== "success") throw new Error("Transaction reverted");
       setStatus(`${label}: confirmed in block ${receipt.blockNumber}.`);
+      const parsed = parseEventLogs({ abi: [inventoryEvent, protectedEvent, violationEvent, slashedEvent, clearedEvent], logs: receipt.logs, strict: false });
+      const items: TimelineItem[] = [];
+      for (const log of parsed) {
+        if (log.eventName === "ExecutorTradeObserved") items.push({ sequence: Number(log.args.sequence ?? 0n), label: log.args.zeroForOne ? "Executor front trade" : "Executor back trade", detail: `${formatUnits(log.args.amountIn ?? 0n, 18)} in / ${formatUnits(log.args.amountOut ?? 0n, 18)} out`, tone: "trade", hash });
+        if (log.eventName === "ProtectedSwapExecuted") items.push({ sequence: Number(log.args.sequence ?? 0n), label: "Signed protected execution", detail: `5 bps lane / ${formatUnits(log.args.amountIn ?? 0n, 18)} token input`, tone: "protected", hash });
+        if (log.eventName === "ViolationOpened") items.push({ sequence: 10_000 + Number(log.logIndex), label: "Reactive evidence matched", detail: short(log.args.evidenceHash), tone: "reactive", hash });
+        if (log.eventName === "WarrantySlashed") items.push({ sequence: 20_000 + Number(log.logIndex), label: "Bond slashed", detail: `${formatUnits(log.args.slashAmount ?? 0n, 6)} USDC allocated`, tone: "settled", hash });
+        if (log.eventName === "WarrantyCleared") items.push({ sequence: 20_000 + Number(log.logIndex), label: "Warranty cleared", detail: `${formatUnits(log.args.releasedBond ?? 0n, 6)} USDC released`, tone: "settled", hash });
+      }
+      if (items.length) setTimeline((current) => [...current, ...items].sort((a, b) => a.sequence - b.sequence));
       await refresh();
       return receipt;
     } catch (error) {

@@ -2,6 +2,43 @@
   "executionId": "0x0ec5e29a5b9f607972f9f0ad86cf02b3c9a0852a339808cf9e72b01cfe55c822",
   "executor": "0xf26DC311a125971a149da0FcBbbD38F00Be1634E",
   "frontOutput": 976400999880597968,
-  "resolutionBlock": 61521300,
-  "trader": "0x8E74976946389e733476b2A3AF741baDCfD9fACf"
+  "resolutionBlock": 61521364,
+  "trader": "0x8E74976946389e733476b2A3AF741baDCfD9fACf",
+  "timeline": [
+    {
+      "sequence": 2,
+      "label": "Executor front trade",
+      "detail": "1 in / 0.976400999880597968 out",
+      "tone": "trade",
+      "hash": "0xa90ca967b721c6ab5b5ab116d1fb4e09a30ec04e091f8b3b5908f3c3c4899ba9"
+    },
+    {
+      "sequence": 3,
+      "label": "Signed protected execution",
+      "detail": "5 bps lane / 10 token input",
+      "tone": "protected",
+      "hash": "0x926865a86789de99ebb515e7655ad70dc7b691be748b3bd50bce6d7a2a03cc5e"
+    },
+    {
+      "sequence": 4,
+      "label": "Executor back trade",
+      "detail": "0.976400999880597968 in / 1.013529841555361398 out",
+      "tone": "trade",
+      "hash": "0x3938ff09b5749286fda41d1337b187baa39196eb5776ef5d71d72bff328ab7ac"
+    },
+    {
+      "sequence": 10000,
+      "label": "Reactive evidence matched",
+      "detail": "0xe9f9...f157",
+      "tone": "reactive",
+      "hash": "0xb6e19b3882e1c4ba97c99644c0e951ed2409832495f94d3fb57e460293448c8b"
+    },
+    {
+      "sequence": 20000,
+      "label": "Bond slashed",
+      "detail": "100 USDC allocated",
+      "tone": "settled",
+      "hash": "0x4f4efcf75de70ccc05c4ee7c9cffc4360bbd88f88dc55993ee8decf3455648d6"
+    }
+  ]
 }
