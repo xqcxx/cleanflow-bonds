@@ -141,16 +141,29 @@ export default function ExecutionLab() {
     setBusy(true);
     try {
       const latest = await publicClient.getBlockNumber();
-      // A demo can span more than 2,000 blocks while Reactive callbacks settle.
-      // The hook/controller addresses are deployment-specific, so this remains bounded.
       const fromBlock = deployment.deployedBlock ? BigInt(deployment.deployedBlock) : 0n;
+      // Unichain RPC providers reject large eth_getLogs ranges, so scan in bounded chunks.
+      async function getLogsInChunks(address: Address, event: any) {
+        const logs: any[] = [];
+        const chunkSize = 2_000n;
+        for (let start = fromBlock; start <= latest; start += chunkSize) {
+          logs.push(...await publicClient!.getLogs({
+            address,
+            event,
+            fromBlock: start,
+            toBlock: start + chunkSize - 1n > latest ? latest : start + chunkSize - 1n,
+          }));
+        }
+        return logs;
+      }
+
       const [nextSequence, inventory, protectedLogs, violations, slashes, clears] = await Promise.all([
         publicClient.readContract({ address: deployment.controller, abi: controllerAbi, functionName: "nextSequence" }),
-        publicClient.getLogs({ address: deployment.hook, event: inventoryEvent, fromBlock }),
-        publicClient.getLogs({ address: deployment.hook, event: protectedEvent, fromBlock }),
-        publicClient.getLogs({ address: deployment.controller, event: violationEvent, fromBlock }),
-        publicClient.getLogs({ address: deployment.controller, event: slashedEvent, fromBlock }),
-        publicClient.getLogs({ address: deployment.controller, event: clearedEvent, fromBlock }),
+        getLogsInChunks(deployment.hook, inventoryEvent),
+        getLogsInChunks(deployment.hook, protectedEvent),
+        getLogsInChunks(deployment.controller, violationEvent),
+        getLogsInChunks(deployment.controller, slashedEvent),
+        getLogsInChunks(deployment.controller, clearedEvent),
       ]);
       setSequence(nextSequence);
       const items: TimelineItem[] = [];
